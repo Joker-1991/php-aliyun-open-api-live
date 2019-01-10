@@ -1,5 +1,5 @@
 {
-  "name": "aliyunapi/php-aliyun-open-api-live",
+  "name": "vitta/php-aliyun-open-api-live",
   "description": "aliyunsdk",
   "keywords": [
     "live",
@@ -14,8 +14,8 @@
   },
   "authors": [
     {
-      "name": "Xu TL",
-      "email": "xutongle@gmail.com"
+      "name": "Vitta",
+      "email": ""
     }
   ],
   "require": {
