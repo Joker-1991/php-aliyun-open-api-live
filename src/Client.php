@@ -72,6 +72,11 @@ class Client
     public $pushDomain = 'video-center.alivecdn.com';
 
     /**
+     * @var string 边缘推流地址
+     */
+    public $sidePushDomain;
+
+    /**
      * @var bool 是否使用安全连接
      */
     public $secureConnection = false;
@@ -250,16 +255,20 @@ class Client
 
     /**
      * 直播签名
+     *
      * @param string $streamName
+     * @param bool   $isSide 是否是边缘推流
+     *
      * @return string
      */
-    public function getSign($streamName)
+    public function getSign($streamName, $isSide = false)
     {
         $uri = "/{$this->appName}/{$streamName}";
+        $vHost = $isSide ? '' : '?vhost=';
         if ($this->pushAuth) {
-            $authKey = "?vhost={$this->domain}&auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+            $authKey = $vHost . "{$this->domain}&auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
         } else {
-            $authKey = "?vhost={$this->domain}";
+            $authKey = $vHost . "{$this->domain}";
         }
         return $authKey;
     }
@@ -292,6 +301,17 @@ class Client
     {
         $uri = "/{$this->appName}/{$streamName}";
         return "rtmp://{$this->pushDomain}" . $uri . $this->getSign($streamName);
+    }
+
+    /** 获取边缘推流url
+     * @param $streamName
+     *
+     * @return string
+     */
+    public function getSidePushUrl($streamName)
+    {
+        $uri = "/{$this->appName}/{$streamName}";
+        return "rtmp://{$this->pushDomain}" . $uri . $this->getSign($streamName, true);
     }
 
     /**
