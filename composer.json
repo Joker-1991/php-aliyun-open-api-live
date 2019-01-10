@@ -7,7 +7,7 @@
     "aliyun"
   ],
   "type": "library",
-  "license": "Apache",
+  "license": "Apache-2.0",
   "support": {
     "issues": "https://github.com/aliyunapi/php-aliyun-open-api-live/issues",
     "source": "https://github.com/aliyunapi/php-aliyun-open-api-live"
