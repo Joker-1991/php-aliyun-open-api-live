@@ -21,9 +21,9 @@
 
 namespace aliyun\live;
 
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Client as HttpClient;
 use aliyun\guzzle\subscriber\Rpc;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\HandlerStack;
 
 /**
  * Class Client
@@ -90,7 +90,7 @@ class Client
     /**
      * @var int 签名有效期,默认有效期是一周
      */
-    public $authTime = 604800;
+    public $authTime = 1800;
 
     /**
      * @var string
@@ -131,25 +131,25 @@ class Client
         }
 
         $this->expirationTime = time() + $this->authTime;
-        $this->playScheme     = $this->secureConnection ? 'https://' : 'http://';
-        $this->httpPlayUrl    = $this->playScheme.$this->domain;
+        $this->playScheme = $this->secureConnection ? 'https://' : 'http://';
+        $this->httpPlayUrl = $this->playScheme . $this->domain;
 
-        if (empty ($this->accessKeyId)) {
-            throw new \Exception ('The "accessKeyId" property must be set.');
+        if (empty($this->accessKeyId)) {
+            throw new \Exception('The "accessKeyId" property must be set.');
         }
-        if (empty ($this->accessSecret)) {
-            throw new \Exception ('The "accessSecret" property must be set.');
+        if (empty($this->accessSecret)) {
+            throw new \Exception('The "accessSecret" property must be set.');
         }
-        if (empty ($this->appName)) {
-            throw new \Exception ('The "appName" property must be set.');
-        }
-
-        if (empty ($this->domain)) {
-            throw new \Exception ('The "domain" property must be set.');
+        if (empty($this->appName)) {
+            throw new \Exception('The "appName" property must be set.');
         }
 
-        if (empty ($this->recordDomain)) {
-            throw new \Exception ('The "recordDomain" property must be set.');
+        if (empty($this->domain)) {
+            throw new \Exception('The "domain" property must be set.');
+        }
+
+        if (empty($this->recordDomain)) {
+            throw new \Exception('The "recordDomain" property must be set.');
         }
     }
 
@@ -159,23 +159,23 @@ class Client
      */
     public function getHttpClient()
     {
-        if ( ! is_object($this->_httpClient)) {
-            $stack      = HandlerStack::create();
+        if (!is_object($this->_httpClient)) {
+            $stack = HandlerStack::create();
             $middleware = new Rpc([
-                'accessKeyId'  => $this->accessKeyId,
+                'accessKeyId' => $this->accessKeyId,
                 'accessSecret' => $this->accessSecret,
-                'Version'      => $this->version
+                'Version' => $this->version,
             ]);
             $stack->push($middleware);
 
             $this->_httpClient = new HttpClient([
-                'base_uri'        => $this->baseUri,
-                'handler'         => $stack,
-                'verify'          => false,
-                'http_errors'     => false,
+                'base_uri' => $this->baseUri,
+                'handler' => $stack,
+                'verify' => false,
+                'http_errors' => false,
                 'connect_timeout' => 3,
-                'read_timeout'    => 10,
-                'debug'           => false,
+                'read_timeout' => 10,
+                'debug' => false,
             ]);
         }
 
@@ -191,7 +191,7 @@ class Client
      */
     public function createRequest(array $params)
     {
-        return $this->getHttpClient()->get('/', [ 'query' => $params ]);
+        return $this->getHttpClient()->get('/', ['query' => $params]);
     }
 
     /**
@@ -204,12 +204,12 @@ class Client
     public function forbidLiveStream($streamName)
     {
         return $this->createRequest([
-            'Action'         => 'ForbidLiveStream',
-            'DomainName'     => $this->domain,
-            'AppName'        => $this->appName,
-            'StreamName'     => $streamName,
+            'Action' => 'ForbidLiveStream',
+            'DomainName' => $this->domain,
+            'AppName' => $this->appName,
+            'StreamName' => $streamName,
             'LiveStreamType' => 'publisher',
-            'ResumeTime'     => gmdate('Y-m-d\TH:i:s\Z', mktime(0, 0, 0, 1, 1, 2099))
+            'ResumeTime' => gmdate('Y-m-d\TH:i:s\Z', mktime(0, 0, 0, 1, 1, 2099)),
         ]);
     }
 
@@ -223,11 +223,11 @@ class Client
     public function startLiveStream($streamName)
     {
         return $this->createRequest([
-            'Action'         => 'ResumeLiveStream',
-            'DomainName'     => $this->domain,
-            'AppName'        => $this->appName,
-            'StreamName'     => $streamName,
-            'LiveStreamType' => 'publisher'
+            'Action' => 'ResumeLiveStream',
+            'DomainName' => $this->domain,
+            'AppName' => $this->appName,
+            'StreamName' => $streamName,
+            'LiveStreamType' => 'publisher',
         ]);
     }
 
@@ -243,16 +243,16 @@ class Client
     public function describeLiveStreamOnlineUserNum($streamName = null, $startTime = null, $endTime = null)
     {
         $params = [
-            'Action'     => 'DescribeLiveStreamOnlineUserNum',
+            'Action' => 'DescribeLiveStreamOnlineUserNum',
             'DomainName' => $this->domain,
-            'AppName'    => $this->appName
+            'AppName' => $this->appName,
         ];
-        if ( ! empty($streamName)) {
+        if (!empty($streamName)) {
             $params['StreamName'] = $streamName;
         }
-        if ( ! empty($startTime) && ! empty($endTime)) {
+        if (!empty($startTime) && !empty($endTime)) {
             $params['StartTime'] = gmdate('Y-m-d\TH:i:s\Z', $startTime);
-            $params['EndTime']   = gmdate('Y-m-d\TH:i:s\Z', $endTime);
+            $params['EndTime'] = gmdate('Y-m-d\TH:i:s\Z', $endTime);
         }
 
         return $this->createRequest($params);
@@ -265,9 +265,9 @@ class Client
     public function describeLiveStreamsOnlineList()
     {
         return $this->createRequest([
-            'Action'     => 'DescribeLiveStreamsOnlineList',
+            'Action' => 'DescribeLiveStreamsOnlineList',
             'DomainName' => $this->domain,
-            'AppName'    => $this->appName
+            'AppName' => $this->appName,
         ]);
     }
 
@@ -281,15 +281,15 @@ class Client
      */
     public function getSign($streamName, $isSide = false)
     {
-        $uri   = "/{$this->appName}/{$streamName}";
+        $uri = "/{$this->appName}/{$streamName}";
         $vHost = $isSide ? '' : '?vhost=';
         if ($this->pushAuth) {
-            $authKey = $vHost."{$this->domain}&auth_key={$this->expirationTime}-0-0-".md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+            $authKey = $vHost . "{$this->domain}&auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
         } else {
-            $authKey = $vHost."{$this->domain}";
+            $authKey = $vHost . "{$this->domain}";
         }
         if ($isSide) {
-            $authKey = "&auth_key={$this->expirationTime}-0-0-".md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+            $authKey = "?auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
         }
 
         return $authKey;
@@ -313,7 +313,7 @@ class Client
      */
     public function getPushArg($streamName)
     {
-        return $streamName.$this->getSign($streamName);
+        return $streamName . $this->getSign($streamName);
     }
 
     /**
@@ -327,7 +327,7 @@ class Client
     {
         $uri = "/{$this->appName}/{$streamName}";
 
-        return "rtmp://{$this->pushDomain}".$uri.$this->getSign($streamName);
+        return "rtmp://{$this->pushDomain}" . $uri . $this->getSign($streamName);
     }
 
     /** 获取边缘推流url
@@ -340,7 +340,7 @@ class Client
     {
         $uri = "/{$this->appName}/{$streamName}";
 
-        return "rtmp://{$this->sidePushDomain}".$uri.$this->getSign($streamName, true);
+        return "rtmp://{$this->sidePushDomain}" . $uri . $this->getSign($streamName, true);
     }
 
     /**
@@ -382,7 +382,7 @@ class Client
     {
         $authKey = '';
         if ($this->pushAuth) {
-            $authKey = "?auth_key={$this->expirationTime}-0-0-".md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+            $authKey = "?auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
         }
 
         return $authKey;
@@ -397,10 +397,10 @@ class Client
      */
     public function getPlayUrlForRTMP($streamName, $isSide = false)
     {
-        $uri  = "/{$this->appName}/{$streamName}";
+        $uri = "/{$this->appName}/{$streamName}";
         $temp = $isSide ? $this->sidePlayDomain : $this->domain;
 
-        return 'rtmp://'.$temp.$uri.$this->getAuthKey($uri);
+        return 'rtmp://' . $temp . $uri . $this->getAuthKey($uri);
     }
 
     /**
@@ -412,10 +412,10 @@ class Client
      */
     public function getPlayUrlForFLV($streamName, $isSide = false)
     {
-        $uri  = "/{$this->appName}/{$streamName}.flv";
-        $temp = $isSide ? $this->playScheme.$this->sidePlayDomain : $this->httpPlayUrl;
+        $uri = "/{$this->appName}/{$streamName}.flv";
+        $temp = $isSide ? $this->playScheme . $this->sidePlayDomain : $this->httpPlayUrl;
 
-        return $temp.$uri.$this->getAuthKey($uri);
+        return $temp . $uri . $this->getAuthKey($uri);
     }
 
     /**
@@ -427,10 +427,10 @@ class Client
      */
     public function getPlayUrlForM3U8($streamName, $isSide = false)
     {
-        $uri  = "/{$this->appName}/{$streamName}.m3u8";
-        $temp = $isSide ? $this->playScheme.$this->sidePlayDomain : $this->httpPlayUrl;
+        $uri = "/{$this->appName}/{$streamName}.m3u8";
+        $temp = $isSide ? $this->playScheme . $this->sidePlayDomain : $this->httpPlayUrl;
 
-        return $temp.$uri.$this->getAuthKey($uri);
+        return $temp . $uri . $this->getAuthKey($uri);
     }
 
     /**
@@ -444,8 +444,8 @@ class Client
     {
         return [
             'rtmp' => $this->getPlayUrlForRTMP($streamName, $isSide),
-            'flv'  => $this->getPlayUrlForFLV($streamName, $isSide),
-            'm3u8' => $this->getPlayUrlForM3U8($streamName, $isSide)
+            'flv' => $this->getPlayUrlForFLV($streamName, $isSide),
+            'm3u8' => $this->getPlayUrlForM3U8($streamName, $isSide),
         ];
     }
 
@@ -481,7 +481,7 @@ class Client
      */
     public function getRecordUrl($uri)
     {
-        return '//'.$this->recordDomain.'/'.$uri;
+        return '//' . $this->recordDomain . '/' . $uri;
     }
 
     /**
