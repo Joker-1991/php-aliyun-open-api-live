@@ -311,7 +311,7 @@ class Client
     public function getSidePushUrl($streamName)
     {
         $uri = "/{$this->appName}/{$streamName}";
-        return "rtmp://{$this->pushDomain}" . $uri . $this->getSign($streamName, true);
+        return "rtmp://{$this->sidePushDomain}" . $uri . $this->getSign($streamName, true);
     }
 
     /**
