@@ -31,6 +31,7 @@ use aliyun\guzzle\subscriber\Rpc;
  */
 class Client
 {
+
     /**
      * @var string
      */
@@ -77,6 +78,11 @@ class Client
     public $sidePushDomain;
 
     /**
+     * @var string 边缘播放地址
+     */
+    public $sidePlayDomain;
+
+    /**
      * @var bool 是否使用安全连接
      */
     public $secureConnection = false;
@@ -113,7 +119,9 @@ class Client
 
     /**
      * Client constructor.
+     *
      * @param array $config
+     *
      * @throws \Exception
      */
     public function __construct($config = [])
@@ -123,8 +131,8 @@ class Client
         }
 
         $this->expirationTime = time() + $this->authTime;
-        $this->playScheme = $this->secureConnection ? 'https://' : 'http://';
-        $this->httpPlayUrl = $this->playScheme . $this->domain;
+        $this->playScheme     = $this->secureConnection ? 'https://' : 'http://';
+        $this->httpPlayUrl    = $this->playScheme.$this->domain;
 
         if (empty ($this->accessKeyId)) {
             throw new \Exception ('The "accessKeyId" property must be set.');
@@ -151,92 +159,102 @@ class Client
      */
     public function getHttpClient()
     {
-        if (!is_object($this->_httpClient)) {
-            $stack = HandlerStack::create();
+        if ( ! is_object($this->_httpClient)) {
+            $stack      = HandlerStack::create();
             $middleware = new Rpc([
-                'accessKeyId' => $this->accessKeyId,
+                'accessKeyId'  => $this->accessKeyId,
                 'accessSecret' => $this->accessSecret,
-                'Version' => $this->version
+                'Version'      => $this->version
             ]);
             $stack->push($middleware);
 
             $this->_httpClient = new HttpClient([
-                'base_uri' => $this->baseUri,
-                'handler' => $stack,
-                'verify' => false,
-                'http_errors' => false,
+                'base_uri'        => $this->baseUri,
+                'handler'         => $stack,
+                'verify'          => false,
+                'http_errors'     => false,
                 'connect_timeout' => 3,
-                'read_timeout' => 10,
-                'debug' => false,
+                'read_timeout'    => 10,
+                'debug'           => false,
             ]);
         }
+
         return $this->_httpClient;
     }
 
     /**
      * 发起Api请求
+     *
      * @param array $params
+     *
      * @return \Psr\Http\Message\ResponseInterface
      */
     public function createRequest(array $params)
     {
-        return $this->getHttpClient()->get('/', ['query' => $params]);
+        return $this->getHttpClient()->get('/', [ 'query' => $params ]);
     }
 
     /**
      * 禁止推流
+     *
      * @param string $streamName
+     *
      * @return string
      */
     public function forbidLiveStream($streamName)
     {
         return $this->createRequest([
-            'Action' => 'ForbidLiveStream',
-            'DomainName' => $this->domain,
-            'AppName' => $this->appName,
-            'StreamName' => $streamName,
+            'Action'         => 'ForbidLiveStream',
+            'DomainName'     => $this->domain,
+            'AppName'        => $this->appName,
+            'StreamName'     => $streamName,
             'LiveStreamType' => 'publisher',
-            'ResumeTime' => gmdate('Y-m-d\TH:i:s\Z', mktime(0, 0, 0, 1, 1, 2099))
+            'ResumeTime'     => gmdate('Y-m-d\TH:i:s\Z', mktime(0, 0, 0, 1, 1, 2099))
         ]);
     }
 
     /**
      * 允许推流
+     *
      * @param string $streamName
+     *
      * @return string
      */
     public function startLiveStream($streamName)
     {
         return $this->createRequest([
-            'Action' => 'ResumeLiveStream',
-            'DomainName' => $this->domain,
-            'AppName' => $this->appName,
-            'StreamName' => $streamName,
+            'Action'         => 'ResumeLiveStream',
+            'DomainName'     => $this->domain,
+            'AppName'        => $this->appName,
+            'StreamName'     => $streamName,
             'LiveStreamType' => 'publisher'
         ]);
     }
 
     /**
      * 实时查询在线人数的请求参数
+     *
      * @param null|string $streamName
-     * @param null|int $startTime
-     * @param null|int $endTime
+     * @param null|int    $startTime
+     * @param null|int    $endTime
+     *
      * @return string
      */
     public function describeLiveStreamOnlineUserNum($streamName = null, $startTime = null, $endTime = null)
     {
         $params = [
-            'Action' => 'DescribeLiveStreamOnlineUserNum',
+            'Action'     => 'DescribeLiveStreamOnlineUserNum',
             'DomainName' => $this->domain,
-            'AppName' => $this->appName
+            'AppName'    => $this->appName
         ];
-        if (!empty($streamName)) {
+        if ( ! empty($streamName)) {
             $params['StreamName'] = $streamName;
         }
-        if (!empty($startTime) && !empty($endTime)) {
+        if ( ! empty($startTime) && ! empty($endTime)) {
             $params['StartTime'] = gmdate('Y-m-d\TH:i:s\Z', $startTime);
-            $params['EndTime'] = gmdate('Y-m-d\TH:i:s\Z', $endTime);
+            $params['EndTime']   = gmdate('Y-m-d\TH:i:s\Z', $endTime);
         }
+
         return $this->createRequest($params);
     }
 
@@ -247,9 +265,9 @@ class Client
     public function describeLiveStreamsOnlineList()
     {
         return $this->createRequest([
-            'Action' => 'DescribeLiveStreamsOnlineList',
+            'Action'     => 'DescribeLiveStreamsOnlineList',
             'DomainName' => $this->domain,
-            'AppName' => $this->appName
+            'AppName'    => $this->appName
         ]);
     }
 
@@ -263,13 +281,17 @@ class Client
      */
     public function getSign($streamName, $isSide = false)
     {
-        $uri = "/{$this->appName}/{$streamName}";
+        $uri   = "/{$this->appName}/{$streamName}";
         $vHost = $isSide ? '' : '?vhost=';
         if ($this->pushAuth) {
-            $authKey = $vHost . "{$this->domain}&auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+            $authKey = $vHost."{$this->domain}&auth_key={$this->expirationTime}-0-0-".md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
         } else {
-            $authKey = $vHost . "{$this->domain}";
+            $authKey = $vHost."{$this->domain}";
         }
+        if ($isSide) {
+            $authKey = "&auth_key={$this->expirationTime}-0-0-".md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+        }
+
         return $authKey;
     }
 
@@ -284,26 +306,32 @@ class Client
 
     /**
      * 获取串码流
+     *
      * @param string $streamName 流名称
+     *
      * @return string
      */
     public function getPushArg($streamName)
     {
-        return $streamName . $this->getSign($streamName);
+        return $streamName.$this->getSign($streamName);
     }
 
     /**
      * 获取直播推流地址
+     *
      * @param string $streamName
+     *
      * @return string
      */
     public function getPushUrl($streamName)
     {
         $uri = "/{$this->appName}/{$streamName}";
-        return "rtmp://{$this->pushDomain}" . $uri . $this->getSign($streamName);
+
+        return "rtmp://{$this->pushDomain}".$uri.$this->getSign($streamName);
     }
 
     /** 获取边缘推流url
+     *
      * @param $streamName
      *
      * @return string
@@ -311,13 +339,16 @@ class Client
     public function getSidePushUrl($streamName)
     {
         $uri = "/{$this->appName}/{$streamName}";
-        return "rtmp://{$this->sidePushDomain}" . $uri . $this->getSign($streamName, true);
+
+        return "rtmp://{$this->sidePushDomain}".$uri.$this->getSign($streamName, true);
     }
 
     /**
      * 验证签名
+     *
      * @param string $streamName
      * @param string $usrargs
+     *
      * @return bool
      */
     public function checkSign($streamName, $usrargs)
@@ -336,78 +367,99 @@ class Client
 
             }
         }
+
         return false;
     }
 
     /**
      * 获取签名
+     *
      * @param string $uri
+     *
      * @return string
      */
     protected function getAuthKey($uri)
     {
         $authKey = '';
         if ($this->pushAuth) {
-            $authKey = "?auth_key={$this->expirationTime}-0-0-" . md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
+            $authKey = "?auth_key={$this->expirationTime}-0-0-".md5("{$uri}-{$this->expirationTime}-0-0-{$this->pushAuth}");
         }
+
         return $authKey;
     }
 
     /**
      * 获取RTMP拉流地址
+     *
      * @param string $streamName
+     *
      * @return string
      */
-    public function getPlayUrlForRTMP($streamName)
+    public function getPlayUrlForRTMP($streamName, $isSide = false)
     {
-        $uri = "/{$this->appName}/{$streamName}";
-        return 'rtmp://' . $this->domain . $uri . $this->getAuthKey($uri);
+        $uri  = "/{$this->appName}/{$streamName}";
+        $temp = $isSide ? $this->sidePlayDomain : $this->domain;
+
+        return 'rtmp://'.$temp.$uri.$this->getAuthKey($uri);
     }
 
     /**
      * 获取FLV播放地址
+     *
      * @param string $streamName
+     *
      * @return string
      */
-    public function getPlayUrlForFLV($streamName)
+    public function getPlayUrlForFLV($streamName, $isSide = false)
     {
-        $uri = "/{$this->appName}/{$streamName}.flv";
-        return $this->httpPlayUrl . $uri . $this->getAuthKey($uri);
+        $uri  = "/{$this->appName}/{$streamName}.flv";
+        $temp = $isSide ? $this->playScheme.$this->sidePlayDomain : $this->httpPlayUrl;
+
+        return $temp.$uri.$this->getAuthKey($uri);
     }
 
     /**
      * 获取M3U8播放地址
+     *
      * @param string $streamName
+     *
      * @return string
      */
-    public function getPlayUrlForM3U8($streamName)
+    public function getPlayUrlForM3U8($streamName, $isSide = false)
     {
-        $uri = "/{$this->appName}/{$streamName}.m3u8";
-        return $this->httpPlayUrl . $uri . $this->getAuthKey($uri);
+        $uri  = "/{$this->appName}/{$streamName}.m3u8";
+        $temp = $isSide ? $this->playScheme.$this->sidePlayDomain : $this->httpPlayUrl;
+
+        return $temp.$uri.$this->getAuthKey($uri);
     }
 
     /**
      * 获取阿里云播放地址
+     *
      * @param string $streamName
+     *
      * @return array
      */
-    public function getPlayUrls($streamName)
+    public function getPlayUrls($streamName, $isSide = false)
     {
         return [
-            'rtmp' => $this->getPlayUrlForRTMP($streamName),
-            'flv' => $this->getPlayUrlForFLV($streamName),
-            'm3u8' => $this->getPlayUrlForM3U8($streamName)
+            'rtmp' => $this->getPlayUrlForRTMP($streamName, $isSide),
+            'flv'  => $this->getPlayUrlForFLV($streamName, $isSide),
+            'm3u8' => $this->getPlayUrlForM3U8($streamName, $isSide)
         ];
     }
 
     /**
      * 设置签名过期时间
+     *
      * @param int $expirationTime
+     *
      * @return $this
      */
     public function setExpirationTime($expirationTime)
     {
         $this->expirationTime = $expirationTime;
+
         return $this;
     }
 
@@ -422,12 +474,14 @@ class Client
 
     /**
      * 获取录像播放地址
+     *
      * @param string $uri
+     *
      * @return string
      */
     public function getRecordUrl($uri)
     {
-        return '//' . $this->recordDomain . '/' . $uri;
+        return '//'.$this->recordDomain.'/'.$uri;
     }
 
     /**
