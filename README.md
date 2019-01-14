@@ -7,18 +7,9 @@
 Installation
 ------------
 
-The preferred way to install this extension is through [composer](http://getcomposer.org/download/).
-
-Either run
 
 ```
-php composer.phar require --prefer-dist aliyunapi/php-aliyun-open-api-live
-```
-
-or add
-
-```
-"aliyunapi/php-aliyun-open-api-live": "~1.0"
+"vitta/php-aliyun-open-api-live": "~1.1.3"
 ```
 
 to the require section of your composer.json.
@@ -32,6 +23,8 @@ $live = new \aliyun\live\Client([
     'appName' => 'live',
     'domain' => 'live.cctv.com',
     'pushAuth' => '1234567',
+    'sidePushDomain' => 'your push url',
+    'sidePlayDomain' => 'you play url'
 ]);
 
 //发送接口请求
@@ -47,9 +40,12 @@ print_r($response);
 生成推流地址
 $live->getPushPath();
 $live->getPushArg($uuid);
-
+生成边缘推流地址
+$live->getSidePushUrl($streamName)
 //获取播放地址
 $live->getPlayUrls($uuid);
+获取边缘播放地址
+$live->getPlayUrls($stream, true);
 
 exit;
 ```
